@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Entorno virtual
+venv/
+env/
+ENV/
+.venv
+
+# Base de datos
+db.sqlite3
+*.sqlite3
+
+# Archivos de entorno
+.env
+.env.*
+!.env.example
+
+# Archivos de media y estáticos
+media/
+staticfiles/
+static/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentación
+README.md
+*.md
+docs/
+
+# Logs
+*.log
