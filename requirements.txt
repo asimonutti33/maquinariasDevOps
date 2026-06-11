@@ -1,0 +1,10 @@
+asgiref
+charset-normalizer
+Django
+django-unfold
+pillow
+pypdf
+reportlab
+sqlparse
+tzdata
+

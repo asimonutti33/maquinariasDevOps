@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Visualizador de Documentos - {{ cliente.razon_social }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* Evita seleccionar texto */
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #3a3a3a;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        /* Toolbar superior */
+        .toolbar {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .cliente-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cliente-info h3 {
+            font-size: 16px;
+            font-weight: normal;
+        }
+        
+        .badge {
+            background: #e74c3c;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .controls button {
+            background: #34495e;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .controls button:hover {
+            background: #1abc9c;
+            transform: scale(1.05);
+        }
+        
+        .controls button:active {
+            transform: scale(0.95);
+        }
+        
+        .page-info {
+            background: #34495e;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .warning {
+            background: #f39c12;
+            color: #2c3e50;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        /* Contenedor del PDF */
+        .pdf-container {
+            width: 100%;
+            height: calc(100vh - 60px);
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            background: #525659;
+            position: relative;
+        }
+        
+        canvas {
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: white;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        /* Marca de agua flotante */
+        .watermark {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255,255,255,0.3);
+            font-size: 12px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 999;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        /* Mensaje de prohibición */
+        .no-download {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            display: none;
+            z-index: 2000;
+            text-align: center;
+            font-size: 18px;
+            border: 2px solid #e74c3c;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        /* Scroll personalizado */
+        .pdf-container::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        .pdf-container::-webkit-scrollbar-track {
+            background: #2c3e50;
+        }
+        
+        .pdf-container::-webkit-scrollbar-thumb {
+            background: #1abc9c;
+            border-radius: 5px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .controls {
+                justify-content: center;
+            }
+            .warning {
+                text-align: center;
+            }
+        }
+    </style>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
+</head>
+<body>
+    <div class="toolbar">
+        <div class="cliente-info">
+            <span>📄</span>
+            <h3>{{ cliente.razon_social }}</h3>
+            <span class="badge">🔒 PROTEGIDO</span>
+        </div>
+        <div class="controls">
+            <button onclick="zoomOut()" title="Alejar">🔍 -</button>
+            <button onclick="zoomIn()" title="Acercar">🔍 +</button>
+            <button onclick="prevPage()" title="Página anterior">◀ Anterior</button>
+            <span class="page-info">
+                Página <span id="page_num">1</span> de <span id="page_count">?</span>
+            </span>
+            <button onclick="nextPage()" title="Página siguiente">Siguiente ▶</button>
+        </div>
+        <div class="warning">
+            ⚠️ Descarga deshabilitada - Documento confidencial
+        </div>
+    </div>
+    
+    <div class="pdf-container" id="pdf-container">
+        <canvas id="pdf-canvas"></canvas>
+    </div>
+    
+    <div class="watermark">
+        CONFIDENCIAL - {{ cliente.razon_social }} - {{ now|date:"d/m/Y H:i" }}
+    </div>
+    
+    <div id="no-download" class="no-download">
+        ⛔ DESCARGA NO PERMITIDA<br>
+        <small>Este documento está protegido</small>
+    </div>
+
+    <script>
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.2;
+        let canvas = document.getElementById('pdf-canvas');
+        let ctx = canvas.getContext('2d');
+        
+        // Bloquear clic derecho completamente
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            mostrarMensaje();
+            return false;
+        });
+        
+        // Bloquear teclas de descarga e impresión
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+S, Ctrl+P, Ctrl+Shift+I, F12, PrintScreen
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'p' || e.key === 'u')) {
+                e.preventDefault();
+                mostrarMensaje();
+                return false;
+            }
+            if (e.key === 'PrintScreen' || e.key === 'F12') {
+                e.preventDefault();
+                mostrarMensaje();
+                return false;
+            }
+            // Bloquear Ctrl+Shift+I (inspeccionar)
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+                e.preventDefault();
+                mostrarMensaje();
+                return false;
+            }
+        });
+        
+        // Bloquear arrastrar imágenes
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        function mostrarMensaje() {
+            const msg = document.getElementById('no-download');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Cargar PDF desde el servidor
+        const pdfUrl = "{% url 'ver_pdf_cliente' cliente.token %}?raw=true";
+        
+        pdfjsLib.getDocument(pdfUrl).promise.then(function(pdfDoc_) {
+            pdfDoc = pdfDoc_;
+            document.getElementById('page_count').textContent = pdfDoc.numPages;
+            renderPage(pageNum);
+        }).catch(function(error) {
+            console.error('Error al cargar PDF:', error);
+            document.getElementById('pdf-container').innerHTML = '<div style="color:white; text-align:center; margin-top:50px;">❌ Error al cargar el documento</div>';
+        });
+        
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({ scale: scale });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+                
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+            document.getElementById('page_num').textContent = num;
+            
+            // Scroll al inicio de la página
+            document.getElementById('pdf-container').scrollTop = 0;
+        }
+        
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+        
+        function prevPage() {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        }
+        
+        function nextPage() {
+            if (!pdfDoc) return;
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        }
+        
+        function zoomIn() {
+            scale += 0.2;
+            if (scale > 3) scale = 3;
+            renderPage(pageNum);
+        }
+        
+        function zoomOut() {
+            scale -= 0.2;
+            if (scale < 0.6) scale = 0.6;
+            renderPage(pageNum);
+        }
+        
+        // Soporte para teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                prevPage();
+            } else if (e.key === 'ArrowRight') {
+                nextPage();
+            }
+        });
+    </script>
+</body>
+</html>

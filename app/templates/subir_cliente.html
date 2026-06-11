@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Subir documento para cliente</title>
+    <style>
+        body { font-family: Arial; margin: 50px; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, button { padding: 8px; }
+        input[type="text"], input[type="email"] { width: 300px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Subir documento para cliente</h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="error">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Razón Social:</label>
+            <input type="text" name="razon_social" required>
+        </div>
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label>PDF (plano/cotización):</label>
+            <input type="file" name="archivo" accept=".pdf" required>
+        </div>
+        <button type="submit">Subir y generar link</button>
+    </form>
+</body>
+</html>

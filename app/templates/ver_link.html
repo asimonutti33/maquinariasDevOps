@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Link para el Cliente</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        .link {
+            background: white;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .info {
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .preview {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8f4f8;
+            border-radius: 5px;
+        }
+        .preview a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Documento cargado exitosamente</h1>
+        <p><strong>Cliente:</strong> {{ cliente.razon_social }}</p>
+        <p><strong>Email:</strong> {{ cliente.email }}</p>
+        
+        <h3>🔗 Link para que el cliente vea el documento:</h3>
+        <div class="link" id="linkCompartir">
+            {{ link_completo }}
+        </div>
+        
+        <button onclick="copiarLink()">📋 Copiar enlace</button>
+        
+        <div class="preview">
+            <strong>👁️ Vista previa del visor:</strong><br>
+            <a href="{{ link_completo }}" target="_blank">Abrir visor de documentos →</a>
+        </div>
+        
+        <div class="info">
+            🔒 El cliente SOLO podrá VER el documento, no descargarlo<br>
+            ✅ Puedes habilitar/deshabilitar la descarga desde el <a href="/admin/">admin</a><br>
+            📱 El visor es responsive y funciona en móviles<br>
+            🛡️ Protección contra: clic derecho, Ctrl+S, Ctrl+P, PrintScreen
+        </div>
+    </div>
+    
+    <script>
+        function copiarLink() {
+            const link = document.getElementById('linkCompartir').innerText;
+            navigator.clipboard.writeText(link).then(() => {
+                alert('✅ Enlace copiado al portapapeles');
+            });
+        }
+    </script>
+</body>
+</html>
