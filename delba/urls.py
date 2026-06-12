@@ -24,6 +24,7 @@ def health_check(request):
 def ready_check(request):
     return JsonResponse({"status": "ready"})
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', subir_cliente, name='subir'),
@@ -32,6 +33,7 @@ urlpatterns = [
     path('health/', health_check, name='health'),
     path('ready/', ready_check, name='ready'),
     path('', include('django_prometheus.urls')),
+    
 ]
 
 if settings.DEBUG:
