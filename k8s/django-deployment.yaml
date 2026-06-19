@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-deployment
+  namespace: maquinarias
+  labels:
+    app: django
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: django
+  template:
+    metadata:
+      labels:
+        app: django
+    spec:
+      initContainers:
+        # Espera a que postgres-service resuelva y acepte conexiones
+        # antes de arrancar el contenedor principal (que corre migrate).
+        - name: wait-for-db
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres-service -p 5432; do
+                echo "Esperando a postgres-service..."
+                sleep 2
+              done
+      containers:
+        - name: django
+          image: maquinarias-web:latest   # reemplazar por la imagen del registry en CI/CD
+          imagePullPolicy: IfNotPresent    # usar Never si la build es local en minikube
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: django-config
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: SECRET_KEY
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: DB_PASSWORD
+            - name: DJANGO_SUPERUSER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: DJANGO_SUPERUSER_PASSWORD
+          volumeMounts:
+            - name: media-storage
+              mountPath: /app/media
+          readinessProbe:
+            httpGet:
+              path: /ready/
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+      volumes:
+        - name: media-storage
+          persistentVolumeClaim:
+            claimName: media-pvc

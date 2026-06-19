@@ -3,4 +3,4 @@ delba/__pycache__/*
 app/__pycache__/*
 app/migrations/*
 documentos/*
-k8s/secret.yaml
+Nuevos/*
