@@ -4,3 +4,5 @@ app/__pycache__/*
 app/migrations/*
 documentos/*
 Nuevos/*
+secret.template(1).yml
+secret.template.yml

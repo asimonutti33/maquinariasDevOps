@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provider
+  namespace: maquinarias
+data:
+  dashboards.yml: |
+    apiVersion: 1
+
+    providers:
+      - name: 'Django Dashboards'
+        orgId: 1
+        folder: 'Maquinarias DevOps'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          path: /etc/grafana/provisioning/dashboards/json

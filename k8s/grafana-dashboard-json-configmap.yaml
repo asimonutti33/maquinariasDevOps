@@ -1,0 +1,145 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-json
+  namespace: maquinarias
+data:
+  golden-signals.json: |
+    {
+      "title": "Maquinarias DevOps - Golden Signals",
+      "uid": "maquinarias-golden-signals",
+      "tags": ["django", "golden-signals", "maquinarias"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "10s",
+      "time": { "from": "now-1h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "01 · Latencia (p95) por endpoint",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "unit": "s", "color": { "mode": "palette-classic" } }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(django_http_requests_latency_seconds_by_view_method_bucket[5m])) by (le, view))",
+              "legendFormat": "{{view}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "02 · Tráfico - Requests por segundo",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(django_http_requests_total_by_view_transport_method_total[5m])) by (view)",
+              "legendFormat": "{{view}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "03 · Errores - Tasa de 4xx/5xx",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "color": { "mode": "palette-classic" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.02 },
+                  { "color": "red", "value": 0.05 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(django_http_responses_total_by_status_view_method_total{status=~\"4..|5..\"}[5m])) / sum(rate(django_http_responses_total_by_status_view_method_total[5m]))",
+              "legendFormat": "tasa de error",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "04 · Saturación - CPU del proceso",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "unit": "percentunit", "color": { "mode": "palette-classic" } }
+          },
+          "targets": [
+            {
+              "expr": "rate(process_cpu_seconds_total{job=\"django\"}[5m])",
+              "legendFormat": "CPU",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "04 · Saturación - Memoria (RSS)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 6, "x": 18, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "unit": "bytes", "color": { "mode": "palette-classic" } }
+          },
+          "targets": [
+            {
+              "expr": "process_resident_memory_bytes{job=\"django\"}",
+              "legendFormat": "Memoria",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Estado del servicio",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 24, "x": 0, "y": 16 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" } } },
+                { "type": "value", "options": { "1": { "text": "UP", "color": "green" } } }
+              ],
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 1 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "up{job=\"django\"}",
+              "legendFormat": "django",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
