@@ -2,10 +2,12 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, Http404
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Sum, Avg  # ← Nueva importación
+from django.db.models import Sum, Avg
+from django.core.files.base import ContentFile
+
 from .models import Cliente
 from .marca_agua import aplicar_marca_agua
-from django.core.files.base import ContentFile
+
 
 def subir_cliente(request):
     if request.method == 'POST':
@@ -16,7 +18,7 @@ def subir_cliente(request):
         if archivo and archivo.name.endswith('.pdf'):
             pdf_original = archivo.read()
 
-            texto_marca = f"DELBA S.R.L."
+            texto_marca = "DELBA S.R.L."
             pdf_con_marca = aplicar_marca_agua(pdf_original, texto_marca)
 
             cliente = Cliente(
@@ -40,17 +42,21 @@ def subir_cliente(request):
 
     return render(request, 'subir_cliente.html')
 
+
 def ver_pdf_cliente(request, token):
     """Vista que muestra el PDF sin permitir descarga fácil"""
     cliente = get_object_or_404(Cliente, token=token)
 
-    # REGISTRO DE VISUALIZACIÓN
+    # Registro de visualización
     if not request.GET.get('raw'):
         cliente.contador_visualizaciones += 1
         cliente.ultima_visualizacion = timezone.now()
         cliente.save()
 
-        print(f"[{timezone.now()}] Cliente: {cliente.razon_social} - Visualizaciones: {cliente.contador_visualizaciones}")
+        print(
+            f"[{timezone.now()}] Cliente: {cliente.razon_social} - "
+            f"Visualizaciones: {cliente.contador_visualizaciones}"
+        )
 
     # Si es una petición para el PDF raw (para el visor)
     if request.GET.get('raw') == 'true':
@@ -60,7 +66,7 @@ def ver_pdf_cliente(request, token):
         try:
             with cliente.archivos_asociados.open('rb') as pdf_file:
                 pdf_content = pdf_file.read()
-        except Exception as e:
+        except Exception:
             raise Http404("Error al leer el archivo")
 
         response = HttpResponse(pdf_content, content_type='application/pdf')
@@ -77,17 +83,19 @@ def ver_pdf_cliente(request, token):
     # Si no, mostrar el visor HTML
     return render(request, 'visor_pdf.html', {'cliente': cliente})
 
-# ============================================
-# NUEVA FUNCIÓN DASHBOARD
-# ============================================
+
 def dashboard(request):
     clientes = Cliente.objects.all().order_by('-fecha_creacion')
 
     # Calcular estadísticas
     total_clientes = Cliente.objects.count()
-    total_visualizaciones = Cliente.objects.aggregate(Sum('contador_visualizaciones'))['contador_visualizaciones__sum'] or 0
+    total_visualizaciones = Cliente.objects.aggregate(
+        Sum('contador_visualizaciones')
+    )['contador_visualizaciones__sum'] or 0
     vistos_hoy = Cliente.objects.filter(ultima_visualizacion__date=timezone.now().date()).count()
-    promedio_visitas = Cliente.objects.aggregate(Avg('contador_visualizaciones'))['contador_visualizaciones__avg'] or 0
+    promedio_visitas = Cliente.objects.aggregate(
+        Avg('contador_visualizaciones')
+    )['contador_visualizaciones__avg'] or 0
 
     return render(request, 'dashboard.html', {
         'clientes': clientes,
