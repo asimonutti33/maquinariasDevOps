@@ -9,7 +9,7 @@ python manage.py wait_for_db 2>/dev/null || {
 }
 
 echo "🔄 Ejecutando makemigrations..."
-python manage.py makemigrations --noinput
+python manage.py makemigrations app --noinput
 
 echo "🔄 Ejecutando migrate..."
 python manage.py migrate --noinput
