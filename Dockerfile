@@ -41,8 +41,6 @@ RUN chmod +x /entrypoint.sh && chown appuser:appuser /entrypoint.sh
 
 USER appuser
 
-RUN python manage.py collectstatic --noinput
-
 EXPOSE 8000
 
 ENTRYPOINT ["/entrypoint.sh"]

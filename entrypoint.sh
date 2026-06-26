@@ -31,6 +31,9 @@ else:
     print(f"ℹ️  Superusuario '{username}' ya existe, se omite.")
 EOF
 
+echo "📦 Recopilando archivos estáticos..."
+python manage.py collectstatic --noinput
+
 echo "🚀 Iniciando Gunicorn..."
 exec gunicorn delba.wsgi:application \
     --bind 0.0.0.0:8000 \
