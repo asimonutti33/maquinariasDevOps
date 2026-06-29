@@ -139,10 +139,6 @@ docker compose down -v       # borra también los volúmenes (DB, media, métric
 ```bash
 minikube start --cpus=4 --memory=4096 --driver=docker
 
-# Construir la imagen DENTRO del Docker de Minikube
-eval $(minikube docker-env)
-docker build -t maquinarias-web:latest .
-
 # Namespace
 kubectl apply -f k8s/namespace.yaml
 
