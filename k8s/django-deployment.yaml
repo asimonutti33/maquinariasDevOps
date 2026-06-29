@@ -30,8 +30,8 @@ spec:
               done
       containers:
         - name: django
-          image: maquinarias-web:latest   # reemplazar por la imagen del registry en CI/CD
-          imagePullPolicy: IfNotPresent    # usar Never si la build es local en minikube
+          image: ales33/maquinarias-devops:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           envFrom:
