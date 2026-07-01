@@ -96,17 +96,19 @@ La app expone dos endpoints de salud (`/health/` y `/ready/`) que se reutilizan 
 git clone https://github.com/asimonutti33/maquinariasDevOps.git
 cd maquinariasDevOps
 
-cp .env.example .env
+cp env.example .env
 # Editar .env con tus propios valores (SECRET_KEY, passwords, etc.)
 
 docker compose up --build
 ```
 
 Al iniciar, el contenedor de Django ejecuta automáticamente (vía `entrypoint.sh`):
-1. Espera a que PostgreSQL esté disponible
-2. `makemigrations` + `migrate`
+1. Espera a que PostgreSQL esté disponible (mediante el `healthcheck` de `db` en `docker-compose.yml`)
+2. `migrate` (las migraciones ya vienen versionadas en `app/migrations/`, no se generan en el contenedor)
 3. Crea un superusuario si no existe (usando las variables `DJANGO_SUPERUSER_*` del `.env`)
 4. Levanta Gunicorn
+
+> **Nota:** las migraciones de Django se generan en desarrollo y se commitean al repo (`python manage.py makemigrations app`). El contenedor solo las aplica con `migrate`; generarlas en tiempo de arranque del contenedor es una mala práctica porque puede producir migraciones distintas según el entorno.
 
 ### Accesos
 
@@ -218,7 +220,12 @@ Imagen publicada: [`ales33/maquinarias-devops`](https://hub.docker.com/r/ales33/
 docker pull ales33/maquinarias-devops:latest
 ```
 
-Se dispara automáticamente con cada push o Pull Request a `main`/`develop`. Ver configuración de secrets necesarios en `.github/workflows/SECRETS_SETUP.md`.
+Se dispara automáticamente con cada push o Pull Request a `main`/`develop`. Requiere los siguientes GitHub Secrets configurados en el repositorio (`Settings → Secrets and variables → Actions`):
+
+| Secret | Uso |
+|---|---|
+| `DOCKERHUB_USERNAME` | Usuario de Docker Hub para publicar la imagen |
+| `DOCKERHUB_TOKEN` | Token de acceso de Docker Hub (no la contraseña) |
 
 > **Nota:** el proyecto todavía no cuenta con tests unitarios (pytest/unittest); el job `test` corre las validaciones nativas de Django mientras tanto. Queda como mejora pendiente.
 
@@ -244,7 +251,7 @@ Archivos de configuración en `monitoring/` (Compose) y como ConfigMaps en `k8s/
 Prácticas de DevSecOps aplicadas:
 
 - **Escaneo de imágenes:** Trivy corre en cada ejecución del pipeline, reportando vulnerabilidades `CRITICAL`/`HIGH` de la imagen final.
-- **Secrets fuera del repo:** ninguna credencial (passwords, `SECRET_KEY`, tokens) está hardcodeada ni commiteada. En local viven en `.env` (no versionado, ver `.env.example`); en Kubernetes se generan vía `kubectl create secret`; en CI/CD viven como GitHub Secrets.
+- **Secrets fuera del repo:** ninguna credencial (passwords, `SECRET_KEY`, tokens) está hardcodeada ni commiteada. En local viven en `.env` (no versionado, ver `env.example`); en Kubernetes se generan vía `kubectl create secret`; en CI/CD viven como GitHub Secrets.
 - **Dependencias actualizadas:** `pip-audit` corre sobre `requirements.txt` en cada ejecución del pipeline.
 - El contenedor de la app corre con un usuario no-root (`appuser`).
 
@@ -275,7 +282,7 @@ maquinariasDevOps/
 ├── docker-compose.yml
 ├── entrypoint.sh
 ├── requirements.txt
-├── .env.example
+├── env.example
 └── README.md
 ```
 
