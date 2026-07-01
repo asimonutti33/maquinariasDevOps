@@ -141,19 +141,28 @@ minikube start --cpus=4 --memory=4096 --driver=docker
 
 # Namespace
 kubectl apply -f k8s/namespace.yaml
-
-# Secret (generar con valores propios, NO usar el template tal cual)
+kubectl apply -f k8s/configmap.yaml
+#Reemplazar con los datos del .env
 kubectl create secret generic django-secret \
   --namespace=maquinarias \
-  --from-literal=SECRET_KEY="$(python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')" \
+  --from-literal=SECRET_KEY='...' \
   --from-literal=DB_USER='postgres' \
-  --from-literal=DB_PASSWORD='tu-password-segura' \
-  --from-literal=DJANGO_SUPERUSER_PASSWORD='tu-password-admin' \
+  --from-literal=DB_PASSWORD='...' \
+  --from-literal=DJANGO_SUPERUSER_PASSWORD='...' \
   --from-literal=GRAFANA_USER='admin' \
-  --from-literal=GRAFANA_PASSWORD='tu-password-grafana'
-
-# Resto de los manifiestos
-kubectl apply -f k8s/
+  --from-literal=GRAFANA_PASSWORD='...'
+kubectl apply -f k8s/postgres-pvc.yaml
+kubectl apply -f k8s/media-pvc.yaml
+kubectl apply -f k8s/postgres-deployment.yaml
+kubectl apply -f k8s/postgres-service.yaml
+kubectl apply -f k8s/django-deployment.yaml
+kubectl apply -f k8s/django-service.yaml
+kubectl apply -f k8s/prometheus-configmap.yaml
+kubectl apply -f k8s/prometheus-deployment.yaml
+kubectl apply -f k8s/grafana-datasource-configmap.yaml
+kubectl apply -f k8s/grafana-dashboard-provider-configmap.yaml
+kubectl apply -f k8s/grafana-dashboard-json-configmap.yaml
+kubectl apply -f k8s/grafana-deployment.yaml
 
 # URLs de acceso
 minikube service django-service -n maquinarias --url
