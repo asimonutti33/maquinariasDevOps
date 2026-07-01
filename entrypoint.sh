@@ -8,9 +8,6 @@ python manage.py wait_for_db 2>/dev/null || {
     sleep 5
 }
 
-echo "🔄 Ejecutando makemigrations..."
-python manage.py makemigrations app --noinput
-
 echo "🔄 Ejecutando migrate..."
 python manage.py migrate --noinput
 
