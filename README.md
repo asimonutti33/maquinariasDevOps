@@ -167,6 +167,8 @@ kubectl apply -f k8s/grafana-deployment.yaml
 # URLs de acceso
 minikube service django-service -n maquinarias --url
 minikube service grafana-service -n maquinarias --url
+
+#Comentario: Si al inciar grafana en dashboard no muestra la información, configurar el tiempo Last 5minutes, ingresar a cada panel Edit ---Refresh----Save
 ```
 
 ### Verificación
