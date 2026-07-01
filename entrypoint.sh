@@ -1,13 +1,6 @@
 #!/bin/sh
 set -e
 
-echo "⏳ Esperando a que la base de datos esté lista..."
-python manage.py wait_for_db 2>/dev/null || {
-    # Fallback si no existe el comando wait_for_db
-    echo "Usando fallback de espera..."
-    sleep 5
-}
-
 echo "🔄 Ejecutando migrate..."
 python manage.py migrate --noinput
 
